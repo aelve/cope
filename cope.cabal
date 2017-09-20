@@ -1,0 +1,39 @@
+name:                cope
+version:             0.1.0
+synopsis:            Answering people is hard
+description:
+  Answering people is hard, but it's easier if you track it somewhere.
+homepage:            http://github.com/aelve/cope
+bug-reports:         http://github.com/aelve/cope/issues
+license:             BSD3
+license-file:        LICENSE
+author:              Artyom
+maintainer:          yom@artyom.me
+-- copyright:           
+category:            Utility
+tested-with:         GHC == 8.0.1
+build-type:          Simple
+extra-source-files:  CHANGELOG.md
+cabal-version:       >=1.10
+
+source-repository head
+  type:                git
+  location:            git://github.com/aelve/cope.git
+
+library
+  exposed-modules:     Cope.Main
+  -- other-modules:       
+  -- other-extensions:    
+  build-depends:       base >=4.9 && <5
+  ghc-options:         -Wall -fno-warn-unused-do-bind
+  hs-source-dirs:      lib
+  default-language:    Haskell2010
+
+executable cope
+  main-is:             Main.hs
+  build-depends:       base
+                     , cope
+  ghc-options:         -Wall -fno-warn-unused-do-bind
+                       -threaded
+  hs-source-dirs:      src
+  default-language:    Haskell2010
