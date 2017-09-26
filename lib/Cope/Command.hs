@@ -11,9 +11,7 @@ module Cope.Command
 where
 
 
-import BasePrelude
-import Lens.Micro.Platform
-import Data.Text.All (Text)
+import Imports
 import Data.Void (Void)
 import qualified Text.Megaparsec as P
 import qualified Text.Megaparsec.Char as P

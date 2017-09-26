@@ -10,9 +10,8 @@ module Cope.Main
 where
 
 
-import BasePrelude hiding (on)
-import qualified Data.Text.All as T
-import Data.Text.All (Text)
+import Imports hiding (on)
+
 import qualified GI.Gtk as Gtk
 import qualified GI.Gdk as Gdk
 import Data.GI.Base
@@ -97,3 +96,11 @@ main = do
   -- Start the program
   #showAll win
   Gtk.main
+
+{-
+next steps:
+  types
+  command execution
+  binding command execution to the field
+  persistent
+-}
