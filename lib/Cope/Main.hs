@@ -99,8 +99,6 @@ main = do
 
 {-
 next steps:
-  types
   command execution
   binding command execution to the field
-  persistent
 -}

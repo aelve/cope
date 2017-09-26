@@ -44,6 +44,9 @@ library
                        megaparsec,
                        microlens-platform,
                        mtl,
+                       persistent,
+                       persistent-sqlite,
+                       persistent-template,
                        text-all,
                        time
   ghc-options:         -Wall -fno-warn-unused-do-bind
@@ -55,6 +58,7 @@ library
     FlexibleInstances
     FunctionalDependencies
     MultiParamTypeClasses
+    GADTs
     ScopedTypeVariables
     NoImplicitPrelude
 
