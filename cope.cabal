@@ -21,7 +21,9 @@ source-repository head
   location:            git://github.com/aelve/cope.git
 
 library
-  exposed-modules:     Cope.Main
+  exposed-modules:
+    Cope.Main
+    Cope.Command
   -- other-modules:       
   -- other-extensions:    
   build-depends:       base >=4.9 && <5,
@@ -29,6 +31,8 @@ library
                        gi-gdk,
                        gi-gtk,
                        haskell-gi-base,
+                       megaparsec,
+                       microlens-platform,
                        text-all
   ghc-options:         -Wall -fno-warn-unused-do-bind
   hs-source-dirs:      lib

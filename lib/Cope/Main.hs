@@ -58,10 +58,10 @@ main = do
         #appendColumn view column
         pure (column, renderer)
 
-  (col_thing,   colRenderer_thing)   <- addColumn "Thing"
-  (col_seen,    colRenderer_seen)    <- addColumn "Seen"
-  (col_ack,     colRenderer_ack)     <- addColumn "Acknowledged"
-  (col_handled, colRenderer_handled) <- addColumn "Handled"
+  (col_thing, colRenderer_thing) <- addColumn "Thing"
+  (col_seen,  colRenderer_seen)  <- addColumn "Seen"
+  (col_ack,   colRenderer_ack)   <- addColumn "Acknowledged"
+  (col_done,  colRenderer_done)  <- addColumn "Done"
 
 {-
   cellLayoutSetAttributes columnChar columnRendererChar model $
