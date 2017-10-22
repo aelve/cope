@@ -82,39 +82,25 @@ execCommand (Add title) = do
     , entryDone     = Nothing
     }
 execCommand (SetSeen pointer seen) = do
-  entryId <- resolvePointer pointer
+  (entryId, _) <- findEntry pointer
   time <- resolveTimeDescr seen
   E.update $ \entry -> do
     E.set entry [ EntrySeen =. E.just (E.val time) ]
     E.where_ (entry E.^. EntryId ==. E.val entryId)
 execCommand (SetAck pointer ack) = do
-  entryId <- resolvePointer pointer
+  (entryId, _) <- findEntry pointer
   time <- resolveTimeDescr ack
   E.update $ \entry -> do
     E.set entry [ EntryAck =. E.just (E.val time) ]
     E.where_ (entry E.^. EntryId ==. E.val entryId)
 execCommand (SetDone pointer done) = do
-  entryId <- resolvePointer pointer
+  (entryId, _) <- findEntry pointer
   time <- resolveTimeDescr done
   E.update $ \entry -> do
     E.set entry [ EntryDone =. E.just (E.val time) ]
     E.where_ (entry E.^. EntryId ==. E.val entryId)
 
 -- TODO: can I write 'updateById' or something?
-
-resolvePointer :: MonadIO m => EntryPointer -> E.SqlReadT m EntryId
-resolvePointer p@(Index i) = do
-  xs <- fmap (map E.unValue) $
-    E.select $ E.from $ \entry -> do
-      E.orderBy [E.asc (entry E.^. EntryId)]
-      E.offset (fromIntegral i)
-      E.limit 1
-      return (entry E.^. EntryId)
-  case xs of
-    [x] -> pure x
-    []  -> fail ("resolvePointer: no entries for "+||p||+"")
-    _   -> fail ("resolvePointer: found several entries for "+||p||+": "
-                 +||xs||+"")
 
 resolveTimeDescr :: MonadIO m => TimeDescr -> m UTCTime
 resolveTimeDescr Now = liftIO getCurrentTime
