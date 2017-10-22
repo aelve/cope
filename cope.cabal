@@ -23,6 +23,7 @@ source-repository head
 library
   exposed-modules:
     Cope.Main
+    Cope.Gui
     Cope.Types
     Cope.Command
     Cope.Query
