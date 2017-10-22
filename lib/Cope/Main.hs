@@ -18,30 +18,53 @@ import Data.GI.Base
 
 main :: IO ()
 main = do
+  gui <- createGui
+  runGui gui
+
+{-
+next steps:
+  command execution
+  binding command execution to the field
+-}
+
+
+-- | All created GUI objects (to be manipulated by various functions).
+data Gui = Gui
+  {
+  -- | Main window
+    mainWindow :: Gtk.Window
+  -- | A place to enter commands
+  , commandInput :: Gtk.Entry
+  -- | List of entries
+  , entriesList :: Gtk.TreeView
+  }
+
+createGui :: IO Gui
+createGui = do
   -- Create a window
   Gtk.init Nothing
-  win <- new Gtk.Window
+  mainWindow <- new Gtk.Window
     [ #title          := "Cope"
     , #gravity        := Gdk.GravityCenter
     , #windowPosition := Gtk.WindowPositionCenter
     , #defaultWidth   := 600
     , #defaultHeight  := 500 ]
-  win `on` #destroy $
+  mainWindow `on` #destroy $
     Gtk.mainQuit
-  win `on` #keyPressEvent $ \e -> do
+  mainWindow `on` #keyPressEvent $ \e -> do
     keyVal  <- Gdk.getEventKeyKeyval e
     keyName <- Gdk.keyvalName keyVal
     if keyName == Just "Escape"
-      then #destroy win >> pure True
+      then #destroy mainWindow >> pure True
       else pure False
 
   -- Create a text entry
-  searchEntry <- new Gtk.Entry []
+  commandInput <- new Gtk.Entry []
 
   -- Create a new list model
-  model <- new Gtk.ListStore []
-  view  <- new Gtk.TreeView
-    [ #model          := model
+  entriesModel <- new Gtk.ListStore []
+  entriesList <- new Gtk.TreeView
+    [ #model          := entriesModel
     , #headersVisible := True ]
 
   -- Add some columns
@@ -53,7 +76,7 @@ main = do
           , #title       := title ]
         renderer <- new Gtk.CellRendererText []
         #packStart column renderer True
-        #appendColumn view column
+        #appendColumn entriesList column
         pure (column, renderer)
 
   (col_thing, colRenderer_thing) <- addColumn "Thing"
@@ -81,23 +104,25 @@ main = do
 -}
 
   viewScrolled <- new Gtk.ScrolledWindow []
-  #add viewScrolled view
+  #add viewScrolled entriesList
 
   -- Create a layout
   layout <- new Gtk.Table
     [ #nRows    := 2
     , #nColumns := 1 ]
-  #attach layout searchEntry 0 1 0 1
+  #attach layout commandInput 0 1 0 1
     [Gtk.AttachOptionsFill] [Gtk.AttachOptionsFill] 0 0
   #attachDefaults layout viewScrolled 0 1 1 2
-  #add win layout
+  #add mainWindow layout
 
-  -- Start the program
-  #showAll win
+  pure Gui
+    { mainWindow   = mainWindow
+    , commandInput = commandInput
+    , entriesList  = entriesList
+    }
+
+-- | Run created GUI. This command doesn't return.
+runGui :: Gui -> IO ()
+runGui Gui{..} = do
+  #showAll mainWindow
   Gtk.main
-
-{-
-next steps:
-  command execution
-  binding command execution to the field
--}

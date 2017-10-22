@@ -30,7 +30,7 @@ data TimeDescr
   deriving (Eq, Show)
 
 data Command
-  = Add Text                       -- ^ Add a new item
+  = Add Text                        -- ^ Add a new item
   | SetSeen EntryPointer TimeDescr  -- ^ Set “seen”
   | SetAck  EntryPointer TimeDescr  -- ^ Set “acknowledged”
   | SetDone EntryPointer TimeDescr  -- ^ Set “done”
