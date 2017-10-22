@@ -4,22 +4,19 @@
 {-# LANGUAGE QuasiQuotes #-}
 
 
-module Cope.Types
-(
-  Entry(..),
-  EntryId,
-  migrateAll,
-)
-where
+-- No explicit export list because Persistent generates lots of stuff,
+-- including data families
+module Cope.Types where
 
 
 import Imports
 
 import Database.Persist.TH
+import Database.Esqueleto
  
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
-Entry
+  Entry
     title     Text               -- “Boss wants me to do X”
     seen      UTCTime Maybe      -- “I saw his message at 10.30am”
     ack       UTCTime Maybe      -- “at 10.53am I said I'll do it tomorrow”

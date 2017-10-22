@@ -25,6 +25,7 @@ library
     Cope.Main
     Cope.Types
     Cope.Command
+    Cope.Query
   other-modules:
     Imports
   build-depends:       base >=4.9 && <5,
@@ -33,6 +34,7 @@ library
                        containers,
                        deepseq,
                        directory,
+                       esqueleto,
                        extra,
                        filepath,
                        fmt,
@@ -55,10 +57,12 @@ library
   default-extensions:
     ViewPatterns
     LambdaCase
+    OverloadedStrings
     FlexibleInstances
     FunctionalDependencies
     MultiParamTypeClasses
     GADTs
+    RankNTypes
     ScopedTypeVariables
     NoImplicitPrelude
 
