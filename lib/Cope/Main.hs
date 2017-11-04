@@ -7,12 +7,15 @@ where
 
 import Imports
 
+import Cope.Types
 import Cope.Gui
 
 
 main :: IO ()
 main = do
   gui <- createGui
+  t <- getCurrentTime
+  setEntries gui [Entry "hi" (Just t) Nothing Nothing Nothing]
   runGui gui
 
 {-

@@ -3,9 +3,13 @@
 
 module Cope.Gui
 (
+  -- * GUI
   Gui(..),
   createGui,
   runGui,
+
+  -- * Methods
+  setEntries,
 )
 where
 
@@ -15,6 +19,9 @@ import Imports hiding (on)
 import qualified GI.Gtk as Gtk
 import qualified GI.Gdk as Gdk
 import Data.GI.Base
+import Data.GI.Base.GValue
+
+import Cope.Types
 
 
 -- | All created GUI objects (to be manipulated by various functions).
@@ -24,8 +31,10 @@ data Gui = Gui
     mainWindow :: Gtk.Window
   -- | A place to enter commands
   , commandInput :: Gtk.Entry
-  -- | List of entries
+  -- | A view for the list of entries
   , entriesList :: Gtk.TreeView
+  -- | The actual entries are stored here
+  , entriesModel :: Gtk.ListStore
   }
 
 -- | Create all widgets, but don't display them or run the GTK loop.
@@ -53,26 +62,31 @@ createGui = do
 
   -- Create a new list model
   entriesModel <- new Gtk.ListStore []
+  #setColumnTypes entriesModel
+    [gtypeString, gtypeString, gtypeString, gtypeString]
   entriesList <- new Gtk.TreeView
     [ #model          := entriesModel
     , #headersVisible := True ]
 
   -- Add some columns
-  let addColumn title = do
+  let addColumn i title = do
         column <- new Gtk.TreeViewColumn
           [ #reorderable := True
           , #resizable   := True
           , #expand      := True
           , #title       := title ]
+        #appendColumn entriesList column
         renderer <- new Gtk.CellRendererText []
         #packStart column renderer True
-        #appendColumn entriesList column
+        #addAttribute column renderer "text" i
         pure (column, renderer)
 
-  (col_thing, colRenderer_thing) <- addColumn "Thing"
-  (col_seen,  colRenderer_seen)  <- addColumn "Seen"
-  (col_ack,   colRenderer_ack)   <- addColumn "Acknowledged"
-  (col_done,  colRenderer_done)  <- addColumn "Done"
+  -- NB. if the order or amount of column changes, don't forget to change
+  -- 'setEntries' too
+  (col_thing, colRenderer_thing) <- addColumn 0 "Thing"
+  (col_seen,  colRenderer_seen)  <- addColumn 1 "Seen"
+  (col_ack,   colRenderer_ack)   <- addColumn 2 "Acknowledged"
+  (col_done,  colRenderer_done)  <- addColumn 3 "Done"
 
 {-
   cellLayoutSetAttributes columnChar columnRendererChar model $
@@ -109,6 +123,7 @@ createGui = do
     { mainWindow   = mainWindow
     , commandInput = commandInput
     , entriesList  = entriesList
+    , entriesModel = entriesModel
     }
 
 -- | Run created GUI. This command also starts the GTK loop and therefore
@@ -117,3 +132,15 @@ runGui :: Gui -> IO ()
 runGui Gui{..} = do
   #showAll mainWindow
   Gtk.main
+
+-- | Set the contents of the entries list.
+setEntries :: Gui -> [Entry] -> IO ()
+setEntries Gui{..} entries = do
+  #clear entriesModel
+  for_ entries $ \Entry{..} -> do
+    row <- #append entriesModel
+    g_title <- toGValue (Just entryTitle)
+    g_seen  <- toGValue (show <$> entrySeen)
+    g_ack   <- toGValue (show <$> entryAck)
+    g_done  <- toGValue (show <$> entryDone)
+    #set entriesModel row [0..3] [g_title, g_seen, g_ack, g_done]
