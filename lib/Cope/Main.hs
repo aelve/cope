@@ -7,16 +7,23 @@ where
 
 import Imports
 
+import Database.Persist.Sqlite
+import Control.Monad.Logger
+
 import Cope.Types
 import Cope.Gui
+import Cope.Query
 
 
 main :: IO ()
-main = do
-  gui <- createGui
-  t <- getCurrentTime
-  setEntries gui [Entry "hi" (Just t) Nothing Nothing Nothing]
-  runGui gui
+main =
+  runStderrLoggingT $
+  withSqliteConn ":memory:" $ \conn -> do
+    runSqlConn (runMigration migrateAll) conn
+    gui <- liftIO createGui
+    entries <- runSqlConn getEntries conn
+    liftIO $ setEntries gui entries
+    liftIO $ runGui gui
 
 {-
 next steps:
