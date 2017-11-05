@@ -104,5 +104,3 @@ execCommand (SetDone pointer done) = do
 
 resolveTimeDescr :: MonadIO m => TimeDescr -> m UTCTime
 resolveTimeDescr Now = liftIO getCurrentTime
-
--- TODO: add Cope.DB or something that would abstract away getting/setting
