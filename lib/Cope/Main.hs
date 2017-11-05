@@ -27,10 +27,11 @@ main =
     let sql :: MonadBaseControl IO m => ReaderT SqlBackend m a -> m a
         sql action = runSqlConn action conn
     sql $ runMigration migrateAll
-    entries <- sql $ getEntries
     -- initialize and run the GUI
     gui <- createGui
-    setEntries gui entries
+    let refreshEntries = do
+          entries <- sql $ getEntries
+          setEntries gui entries
     bindCommandHandler gui $ \cmdString -> do
       case parseCommand cmdString of
         Left err ->
@@ -39,4 +40,9 @@ main =
           clearCommandInput gui
           sql (execCommand cmd) `catchAny` \ex ->
             showErrorMessage (T.toStrict (displayException ex))
+          refreshEntries
+    refreshEntries
     runGui gui
+
+-- TODO: we should 'runEntries' after the GUI has been initialized because
+-- then we can show an error message if it fails
