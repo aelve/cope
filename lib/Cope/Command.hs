@@ -47,7 +47,7 @@ parseCommand = over _Left P.parseErrorPretty
              . P.parse (pCommand <* P.eof) ""
 
 pCommand :: Parser Command
-pCommand = P.choice
+pCommand = P.choice $ map P.try
   [ Add <$> (P.string "add " *> P.takeRest)
   , SetSeen
       <$> (mbEntryPointer <* P.string "seen ")
