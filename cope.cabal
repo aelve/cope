@@ -27,6 +27,7 @@ library
     Cope.Types
     Cope.Command
     Cope.Query
+    Cope.Time
   other-modules:
     Imports
   build-depends:       base >=4.9 && <5,

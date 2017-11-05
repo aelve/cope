@@ -62,7 +62,9 @@ main =
 * Allow pasting screenshots
 * Allow editing data
 * Have something other than “now”
-* Display time diffs instead of dates
+* Show how much time is left to the deadline (as an imprecise diff)
+* In “done” show how much time was left to the deadline +
+  percentage of the distance between “ack” and “deadline”
 * Save to a real database
 * Optionally hide entries that were done more than X hours ago (have a
   slider for that)

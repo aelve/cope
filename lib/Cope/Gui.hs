@@ -27,6 +27,7 @@ import Data.GI.Base
 import UnliftIO
 
 import Cope.Types
+import Cope.Time
 
 
 ----------------------------------------------------------------------------
@@ -153,11 +154,15 @@ setEntries Gui{..} entries = liftIO $ do
     let showTime utcT = do
           localT <- utcToLocalZonedTime utcT
           return (format "{} {}" (dateDashF localT) (hmF localT) :: Text)
+        showTimeOrDiff a b = case (a, b) of
+          (_      , Nothing) -> pure ""
+          (Nothing, Just y)  -> showTime y
+          (Just x , Just y)  -> pure ("in " <> showTimeDiff (diffUTCTime y x))
     values <- sequence
       [ toGValue (Just (show i))
       , toGValue (Just entryTitle)
       , toGValue =<< _Just showTime entrySeen
-      , toGValue =<< _Just showTime entryAck
+      , toGValue . Just =<< showTimeOrDiff entrySeen entryAck
       , toGValue =<< _Just showTime entryDeadline
       , toGValue =<< _Just showTime entryDone
       ]
