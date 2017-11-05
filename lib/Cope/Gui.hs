@@ -29,6 +29,10 @@ import UnliftIO
 import Cope.Types
 
 
+----------------------------------------------------------------------------
+-- Types
+----------------------------------------------------------------------------
+
 -- | All created GUI objects (to be manipulated by various functions).
 data Gui = Gui
   {
@@ -41,6 +45,10 @@ data Gui = Gui
   -- | The actual entries are stored here
   , entriesModel :: Gtk.ListStore
   }
+
+----------------------------------------------------------------------------
+-- GUI initialization
+----------------------------------------------------------------------------
 
 -- | Create all widgets, but don't display them or run the GTK loop.
 createGui :: MonadIO m => m Gui
@@ -65,56 +73,10 @@ createGui = do
   -- Create a text entry
   commandInput <- new Gtk.Entry []
 
-  -- Create a new list model
-  entriesModel <- new Gtk.ListStore []
-  #setColumnTypes entriesModel
-    [gtypeString, gtypeString, gtypeString, gtypeString, gtypeString]
-  entriesList <- new Gtk.TreeView
-    [ #model          := entriesModel
-    , #headersVisible := True ]
-
-  -- Add some columns
-  let addColumn i title = do
-        column <- new Gtk.TreeViewColumn
-          [ #reorderable := True
-          , #resizable   := True
-          , #expand      := True
-          , #title       := title ]
-        #appendColumn entriesList column
-        renderer <- new Gtk.CellRendererText []
-        #packStart column renderer True
-        #addAttribute column renderer "text" i
-        pure (column, renderer)
-
-  -- NB. if the order or amount of column changes, don't forget to change
-  -- 'setEntries' and the list that 'setColumnTypes' is called with
-  (col_index, colRenderer_index) <- addColumn 0 ""
-  (col_thing, colRenderer_thing) <- addColumn 1 "Thing"
-  (col_seen,  colRenderer_seen)  <- addColumn 2 "Seen"
-  (col_ack,   colRenderer_ack)   <- addColumn 3 "Acknowledged"
-  (col_done,  colRenderer_done)  <- addColumn 4 "Done"
-
-{-
-  cellLayoutSetAttributes columnChar columnRendererChar model $
-    \(_mbNote, entity) -> [ cellText := entity ]
-  cellLayoutSetAttributes columnDescription columnRendererDescription model $
-    \(mbNote, entity) -> [
-      cellText := let name = case M.lookup entity names of
-                        Nothing -> []
-                        Just x  -> [x]
-                      note = case mbNote of
-                        Nothing -> []
-                        Just x  -> ["[" <> x <> "]"]
-                  in  T.unwords (name ++ note) ]
-  cellLayoutSetAttributes columnUnicodeName columnRendererUnicodeName model $
-    \(_mbNote, entity) -> [
-      cellText := if T.length entity == 1
-                    then T.charName (T.head entity)
-                    else "" ]
--}
-
-  viewScrolled <- new Gtk.ScrolledWindow []
-  #add viewScrolled entriesList
+  -- Create the entries list
+  (entriesList, entriesModel) <- createEntriesList
+  entriesListScrolled <- new Gtk.ScrolledWindow []
+  #add entriesListScrolled entriesList
 
   -- Create a layout
   layout <- new Gtk.Table
@@ -122,7 +84,7 @@ createGui = do
     , #nColumns := 1 ]
   #attach layout commandInput 0 1 0 1
     [Gtk.AttachOptionsFill] [Gtk.AttachOptionsFill] 0 0
-  #attachDefaults layout viewScrolled 0 1 1 2
+  #attachDefaults layout entriesListScrolled 0 1 1 2
   #add mainWindow layout
 
   pure Gui
@@ -132,12 +94,54 @@ createGui = do
     , entriesModel = entriesModel
     }
 
+-- | Create the entries list.
+createEntriesList :: MonadIO m => m (Gtk.TreeView, Gtk.ListStore)
+createEntriesList = do
+  -- NB. if the order or amount of column changes, don't forget to change
+  -- 'setEntries'
+  let columns =
+        [ (""            , gtypeString)    -- index
+        , ("Thing"       , gtypeString)
+        , ("Seen"        , gtypeString)
+        , ("Acknowledged", gtypeString)
+        , ("Done"        , gtypeString)
+        ]
+
+  -- Create a new list model
+  entriesModel <- new Gtk.ListStore []
+  #setColumnTypes entriesModel (map snd columns)
+  entriesList <- new Gtk.TreeView
+    [ #model          := entriesModel
+    , #headersVisible := True ]
+
+  -- Add some columns
+  ifor_ columns $ \i (title, _type) -> do
+    column <- new Gtk.TreeViewColumn
+      [ #reorderable := True
+      , #resizable   := True
+      , #expand      := True
+      , #title       := title ]
+    #appendColumn entriesList column
+    renderer <- new Gtk.CellRendererText []
+    #packStart column renderer True
+    #addAttribute column renderer "text" (fromIntegral i)
+
+  pure (entriesList, entriesModel)
+
+----------------------------------------------------------------------------
+-- GUI running
+----------------------------------------------------------------------------
+
 -- | Run created GUI. This command also starts the GTK loop and therefore
 -- doesn't return.
 runGui :: MonadIO m => Gui -> m ()
 runGui Gui{..} = do
   #showAll mainWindow
   Gtk.main
+
+----------------------------------------------------------------------------
+-- GUI methods
+----------------------------------------------------------------------------
 
 -- | Set the contents of the entries list.
 setEntries :: MonadIO m => Gui -> [Entry] -> m ()
