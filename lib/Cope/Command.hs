@@ -31,6 +31,7 @@ data TimeDescr
 
 data Command
   = Add Text                            -- ^ Add a new item
+  | SetTitle    EntryPointer Text       -- ^ Set “title”
   | SetSeen     EntryPointer TimeDescr  -- ^ Set “seen”
   | SetAck      EntryPointer TimeDescr  -- ^ Set “acknowledged”
   | SetDeadline EntryPointer TimeDescr  -- ^ Set “deadline”
@@ -50,6 +51,9 @@ parseCommand = over _Left P.parseErrorPretty
 pCommand :: Parser Command
 pCommand = P.choice $ map P.try
   [ Add <$> (P.string "add " *> P.takeRest)
+  , SetTitle
+      <$> (mbEntryPointer <* P.string "title ")
+      <*> P.takeRest
   , SetSeen
       <$> (mbEntryPointer <* P.string "seen ")
       <*> pTimeDescr
@@ -87,6 +91,11 @@ execCommand = \case
       , entryDeadline = Nothing
       , entryDone     = Nothing
       }
+
+  -- Set the “title” field
+  SetTitle pointer title -> do
+    updateEntry pointer $ \entry ->
+      E.set entry [ EntryTitle =. E.val title ]
 
   -- Set the “seen” field
   SetSeen pointer seen -> do
