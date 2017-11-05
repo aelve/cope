@@ -169,7 +169,7 @@ clearCommandInput Gui{..} = do
 showErrorMessage :: MonadIO m => Text -> m ()
 showErrorMessage msg = void $ do
   dialog <- new Gtk.MessageDialog
-    [ #text    := "ERROR\n\n" <> msg
+    [ #text    := "Error:\n\n" <> msg
     , #buttons := Gtk.ButtonsTypeOk ]
   #run dialog
   #destroy dialog

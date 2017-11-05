@@ -11,6 +11,7 @@ import Imports
 import Database.Persist.Sqlite
 import Control.Monad.Logger
 import Control.Monad.Trans.Control
+import UnliftIO.Exception (catchAny)
 import qualified Data.Text.All as T
 
 import Cope.Types
@@ -36,5 +37,6 @@ main =
           showErrorMessage (T.toStrict err)
         Right cmd -> do
           clearCommandInput gui
-          sql $ execCommand cmd
+          sql (execCommand cmd) `catchAny` \ex ->
+            showErrorMessage (T.toStrict (displayException ex))
     runGui gui
