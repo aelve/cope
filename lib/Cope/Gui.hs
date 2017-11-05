@@ -144,10 +144,13 @@ setEntries Gui{..} entries = liftIO $ do
   #clear entriesModel
   for_ entries $ \Entry{..} -> do
     row <- #append entriesModel
+    let showTime utcT = do
+          localT <- utcToLocalZonedTime utcT
+          return (format "{} {}" (dateDashF localT) (hmF localT) :: Text)
     g_title <- toGValue (Just entryTitle)
-    g_seen  <- toGValue (show <$> entrySeen)
-    g_ack   <- toGValue (show <$> entryAck)
-    g_done  <- toGValue (show <$> entryDone)
+    g_seen  <- toGValue =<< _Just showTime entrySeen
+    g_ack   <- toGValue =<< _Just showTime entryAck
+    g_done  <- toGValue =<< _Just showTime entryDone
     #set entriesModel row [0..3] [g_title, g_seen, g_ack, g_done]
 
 -- | Bind a command execution handler.

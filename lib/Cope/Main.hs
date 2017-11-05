@@ -44,5 +44,5 @@ main =
     refreshEntries
     runGui gui
 
--- TODO: we should 'runEntries' after the GUI has been initialized because
--- then we can show an error message if it fails
+-- TODO: we should 'refreshEntries' after the GUI has been initialized
+-- because then we can show an error message if it fails
