@@ -118,7 +118,7 @@ createEntriesList = do
 
   -- Add some columns
   ifor_ columns $ \i (title, _type) -> do
-    column <- new Gtk.TreeViewColumn
+    column <- new Gtk.TreeViewColumn $
       [ #reorderable := True
       , #resizable   := True
       , #expand      := True
@@ -126,7 +126,8 @@ createEntriesList = do
     #appendColumn entriesList column
     renderer <- new Gtk.CellRendererText []
     #packStart column renderer True
-    #addAttribute column renderer "text" (fromIntegral i)
+    -- using "markup" instead of "text" enables Pango text markup (e.g. <i>)
+    #addAttribute column renderer "markup" (fromIntegral i)
 
   pure (entriesList, entriesModel)
 
@@ -158,9 +159,16 @@ setEntries Gui{..} entries = liftIO $ do
           (_      , Nothing) -> pure ""
           (Nothing, Just y)  -> showTime y
           (Just x , Just y)  -> pure ("in " <> showTimeDiff (diffUTCTime y x))
+    -- TODO: escape the text with
+    -- https://hackage.haskell.org/package/gi-glib/docs/GI-GLib-Functions.html#v:markupEscapeText
+    -- (see https://github.com/haskell-gi/haskell-gi/issues/128)
+    let thing = entryTitle <> case entryWhere of
+                  Nothing -> ""
+                  Just w  -> "\n<span size=\"x-small\" alpha=\"60%\">"
+                             <> w <> "</span>"
     values <- sequence
       [ toGValue (Just (show i))
-      , toGValue (Just entryTitle)
+      , toGValue (Just thing)
       , toGValue =<< _Just showTime entrySeen
       , toGValue . Just =<< showTimeOrDiff entrySeen entryAck
       , toGValue =<< _Just showTime entryDeadline

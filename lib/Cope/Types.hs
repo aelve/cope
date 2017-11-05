@@ -18,6 +18,7 @@ import Database.Esqueleto
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
   Entry
     title     Text               -- “Boss wants me to do X”
+    where     Text Maybe         -- “he said so in Slack”
     seen      UTCTime Maybe      -- “I saw his message at 10.30am”
     ack       UTCTime Maybe      -- “at 10.53am I said...”
     deadline  UTCTime Maybe      --             “...that I'll do it tomorrow”

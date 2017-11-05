@@ -32,6 +32,7 @@ data TimeDescr
 data Command
   = Add Text                            -- ^ Add a new item
   | SetTitle    EntryPointer Text       -- ^ Set “title”
+  | SetWhere    EntryPointer Text       -- ^ Set “where”
   | SetSeen     EntryPointer TimeDescr  -- ^ Set “seen”
   | SetAck      EntryPointer TimeDescr  -- ^ Set “acknowledged”
   | SetDeadline EntryPointer TimeDescr  -- ^ Set “deadline”
@@ -53,6 +54,9 @@ pCommand = P.choice $ map P.try
   [ Add <$> (P.string "add " *> P.takeRest)
   , SetTitle
       <$> (mbEntryPointer <* P.string "title ")
+      <*> P.takeRest
+  , SetWhere
+      <$> (mbEntryPointer <* P.string "where ")
       <*> P.takeRest
   , SetSeen
       <$> (mbEntryPointer <* P.string "seen ")
@@ -86,6 +90,7 @@ execCommand = \case
   Add title -> do
     E.insert_ $ Entry
       { entryTitle    = title
+      , entryWhere    = Nothing
       , entrySeen     = Nothing
       , entryAck      = Nothing
       , entryDeadline = Nothing
@@ -96,6 +101,11 @@ execCommand = \case
   SetTitle pointer title -> do
     updateEntry pointer $ \entry ->
       E.set entry [ EntryTitle =. E.val title ]
+
+  -- Set the “where” field
+  SetWhere pointer where_ -> do
+    updateEntry pointer $ \entry ->
+      E.set entry [ EntryWhere =. E.just (E.val where_) ]
 
   -- Set the “seen” field
   SetSeen pointer seen -> do

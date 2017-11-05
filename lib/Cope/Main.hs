@@ -62,6 +62,7 @@ main =
 * Allow pasting screenshots
 * Allow editing data
 * Have something other than “now”
+* Show dates better
 * Show how much time is left to the deadline (as an imprecise diff)
 * In “done” show how much time was left to the deadline +
   percentage of the distance between “ack” and “deadline”
@@ -73,7 +74,6 @@ main =
 * Have analytics
 * Allow deleting entries
 * Have trees of entries
-* Add a “where” column
 * Allow aborting things
 
 -}
