@@ -37,9 +37,9 @@ main =
         Left err ->
           showErrorMessage (T.toStrict err)
         Right cmd -> do
-          clearCommandInput gui
           sql (execCommand cmd) `catchAny` \ex ->
             showErrorMessage (T.toStrict (displayException ex))
+          clearCommandInput gui
           refreshEntries
     refreshEntries
     runGui gui
