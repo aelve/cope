@@ -68,7 +68,7 @@ createGui = do
   -- Create a new list model
   entriesModel <- new Gtk.ListStore []
   #setColumnTypes entriesModel
-    [gtypeString, gtypeString, gtypeString, gtypeString]
+    [gtypeString, gtypeString, gtypeString, gtypeString, gtypeString]
   entriesList <- new Gtk.TreeView
     [ #model          := entriesModel
     , #headersVisible := True ]
@@ -87,7 +87,7 @@ createGui = do
         pure (column, renderer)
 
   -- NB. if the order or amount of column changes, don't forget to change
-  -- 'setEntries' too
+  -- 'setEntries' and the list that 'setColumnTypes' is called with
   (col_index, colRenderer_index) <- addColumn 0 ""
   (col_thing, colRenderer_thing) <- addColumn 1 "Thing"
   (col_seen,  colRenderer_seen)  <- addColumn 2 "Seen"
