@@ -88,10 +88,11 @@ createGui = do
 
   -- NB. if the order or amount of column changes, don't forget to change
   -- 'setEntries' too
-  (col_thing, colRenderer_thing) <- addColumn 0 "Thing"
-  (col_seen,  colRenderer_seen)  <- addColumn 1 "Seen"
-  (col_ack,   colRenderer_ack)   <- addColumn 2 "Acknowledged"
-  (col_done,  colRenderer_done)  <- addColumn 3 "Done"
+  (col_index, colRenderer_index) <- addColumn 0 ""
+  (col_thing, colRenderer_thing) <- addColumn 1 "Thing"
+  (col_seen,  colRenderer_seen)  <- addColumn 2 "Seen"
+  (col_ack,   colRenderer_ack)   <- addColumn 3 "Acknowledged"
+  (col_done,  colRenderer_done)  <- addColumn 4 "Done"
 
 {-
   cellLayoutSetAttributes columnChar columnRendererChar model $
@@ -142,16 +143,17 @@ runGui Gui{..} = do
 setEntries :: MonadIO m => Gui -> [Entry] -> m ()
 setEntries Gui{..} entries = liftIO $ do
   #clear entriesModel
-  for_ entries $ \Entry{..} -> do
+  ifor_ entries $ \i Entry{..} -> do
     row <- #append entriesModel
     let showTime utcT = do
           localT <- utcToLocalZonedTime utcT
           return (format "{} {}" (dateDashF localT) (hmF localT) :: Text)
+    g_index <- toGValue (Just (show i))
     g_title <- toGValue (Just entryTitle)
     g_seen  <- toGValue =<< _Just showTime entrySeen
     g_ack   <- toGValue =<< _Just showTime entryAck
     g_done  <- toGValue =<< _Just showTime entryDone
-    #set entriesModel row [0..3] [g_title, g_seen, g_ack, g_done]
+    #set entriesModel row [0..4] [g_index, g_title, g_seen, g_ack, g_done]
 
 -- | Bind a command execution handler.
 bindCommandHandler
