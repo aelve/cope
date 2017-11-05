@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 module Cope.Main
 (
   main,
@@ -9,25 +10,31 @@ import Imports
 
 import Database.Persist.Sqlite
 import Control.Monad.Logger
+import Control.Monad.Trans.Control
+import qualified Data.Text.All as T
 
 import Cope.Types
 import Cope.Gui
 import Cope.Query
+import Cope.Command
 
 
 main :: IO ()
 main =
   runStderrLoggingT $
   withSqliteConn ":memory:" $ \conn -> do
-    runSqlConn (runMigration migrateAll) conn
-    gui <- liftIO createGui
-    entries <- runSqlConn getEntries conn
-    liftIO $ setEntries gui entries
-    liftIO $ runGui gui
-
-{-
-next steps:
-  command execution
-  binding command execution to the field
--}
-
+    let sql :: MonadBaseControl IO m => ReaderT SqlBackend m a -> m a
+        sql action = runSqlConn action conn
+    sql $ runMigration migrateAll
+    entries <- sql $ getEntries
+    -- initialize and run the GUI
+    gui <- createGui
+    setEntries gui entries
+    bindCommandHandler gui $ \cmdString -> do
+      case parseCommand cmdString of
+        Left err ->
+          showErrorMessage (T.toStrict err)
+        Right cmd -> do
+          clearCommandInput gui
+          sql $ execCommand cmd
+    runGui gui

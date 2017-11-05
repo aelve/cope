@@ -10,16 +10,21 @@ module Cope.Gui
 
   -- * Methods
   setEntries,
+  bindCommandHandler,
+  clearCommandInput,
+
+  -- * Other stuff
+  showErrorMessage,
 )
 where
 
 
-import Imports hiding (on)
+import Imports hiding (set, get, on)
 
 import qualified GI.Gtk as Gtk
 import qualified GI.Gdk as Gdk
 import Data.GI.Base
-import Data.GI.Base.GValue
+import UnliftIO
 
 import Cope.Types
 
@@ -38,7 +43,7 @@ data Gui = Gui
   }
 
 -- | Create all widgets, but don't display them or run the GTK loop.
-createGui :: IO Gui
+createGui :: MonadIO m => m Gui
 createGui = do
   -- Create a window
   Gtk.init Nothing
@@ -128,14 +133,14 @@ createGui = do
 
 -- | Run created GUI. This command also starts the GTK loop and therefore
 -- doesn't return.
-runGui :: Gui -> IO ()
+runGui :: MonadIO m => Gui -> m ()
 runGui Gui{..} = do
   #showAll mainWindow
   Gtk.main
 
 -- | Set the contents of the entries list.
-setEntries :: Gui -> [Entry] -> IO ()
-setEntries Gui{..} entries = do
+setEntries :: MonadIO m => Gui -> [Entry] -> m ()
+setEntries Gui{..} entries = liftIO $ do
   #clear entriesModel
   for_ entries $ \Entry{..} -> do
     row <- #append entriesModel
@@ -144,3 +149,27 @@ setEntries Gui{..} entries = do
     g_ack   <- toGValue (show <$> entryAck)
     g_done  <- toGValue (show <$> entryDone)
     #set entriesModel row [0..3] [g_title, g_seen, g_ack, g_done]
+
+-- | Bind a command execution handler.
+bindCommandHandler
+  :: MonadUnliftIO m
+  => Gui -> (Text -> m ()) -> m ()
+bindCommandHandler Gui{..} callback = void $ do
+  runInIO <- askRunInIO
+  commandInput `on` #activate $ do
+    text <- commandInput `get` #text
+    runInIO $ callback text
+
+-- | Clear the command input.
+clearCommandInput :: MonadIO m => Gui -> m ()
+clearCommandInput Gui{..} = do
+  set commandInput [ #text := "" ]
+
+-- | Show a popup with an error message.
+showErrorMessage :: MonadIO m => Text -> m ()
+showErrorMessage msg = void $ do
+  dialog <- new Gtk.MessageDialog
+    [ #text    := "ERROR\n\n" <> msg
+    , #buttons := Gtk.ButtonsTypeOk ]
+  #run dialog
+  #destroy dialog
