@@ -15,7 +15,7 @@ import Cope.Types
   
 
 data EntryPointer
-  = Index Int   -- ^ Entry with specific index
+  = Index Int   -- ^ Entry with specific index (newest is 0)
   deriving (Eq, Show)
 
 -- | Find an entry by 'EntryPointer'.
@@ -24,7 +24,7 @@ findEntry p@(Index i) = do
   let unwrap (eid, e) = (E.unValue eid, E.entityVal e)
   xs <- fmap (map unwrap) $
     E.select $ E.from $ \entry -> do
-      E.orderBy [E.asc (entry E.^. EntryId)]
+      E.orderBy [E.desc (entry E.^. EntryId)]
       E.offset (fromIntegral i)
       E.limit 1
       return (entry E.^. EntryId, entry)
@@ -33,9 +33,11 @@ findEntry p@(Index i) = do
     []  -> fail ("findEntry: no entries for "+||p||+"")
     _   -> fail ("findEntry: several entries for "+||p||+": "+||xs||+"")
 
--- | Get a list of all entries.
+-- | Get a list of all entries. The entries are sorted from newest to
+-- oldest.
 getEntries :: MonadIO m => E.SqlReadT m [Entry]
 getEntries =
   fmap (map E.entityVal) $
-    E.select $ E.from $ \entry ->
+    E.select $ E.from $ \entry -> do
+      E.orderBy [E.desc (entry E.^. EntryId)]
       return entry
