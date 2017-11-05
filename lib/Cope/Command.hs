@@ -30,10 +30,11 @@ data TimeDescr
   deriving (Eq, Show)
 
 data Command
-  = Add Text                        -- ^ Add a new item
-  | SetSeen EntryPointer TimeDescr  -- ^ Set “seen”
-  | SetAck  EntryPointer TimeDescr  -- ^ Set “acknowledged”
-  | SetDone EntryPointer TimeDescr  -- ^ Set “done”
+  = Add Text                            -- ^ Add a new item
+  | SetSeen     EntryPointer TimeDescr  -- ^ Set “seen”
+  | SetAck      EntryPointer TimeDescr  -- ^ Set “acknowledged”
+  | SetDeadline EntryPointer TimeDescr  -- ^ Set “deadline”
+  | SetDone     EntryPointer TimeDescr  -- ^ Set “done”
   deriving (Eq, Show)
 
 type Parser = P.Parsec Void Text
@@ -55,6 +56,9 @@ pCommand = P.choice $ map P.try
   , SetAck
       <$> (mbEntryPointer <* P.string "ack ")
       <*> pTimeDescr
+  , SetDeadline
+      <$> (mbEntryPointer <* P.string "deadline ")
+      <*> pTimeDescr
   , SetDone
       <$> (mbEntryPointer <* P.string "done ")
       <*> pTimeDescr
@@ -73,34 +77,59 @@ pEntryPointer = Index <$> P.decimal
 ----------------------------------------------------------------------------
 
 execCommand :: MonadIO m => Command -> E.SqlPersistT m ()
-execCommand (Add title) = do
-  E.insert_ $ Entry
-    { entryTitle    = title
-    , entrySeen     = Nothing
-    , entryAck      = Nothing
-    , entryDeadline = Nothing
-    , entryDone     = Nothing
-    }
-execCommand (SetSeen pointer seen) = do
-  (entryId, _) <- findEntry pointer
-  time <- resolveTimeDescr seen
-  E.update $ \entry -> do
-    E.set entry [ EntrySeen =. E.just (E.val time) ]
-    E.where_ (entry E.^. EntryId ==. E.val entryId)
-execCommand (SetAck pointer ack) = do
-  (entryId, _) <- findEntry pointer
-  time <- resolveTimeDescr ack
-  E.update $ \entry -> do
-    E.set entry [ EntryAck =. E.just (E.val time) ]
-    E.where_ (entry E.^. EntryId ==. E.val entryId)
-execCommand (SetDone pointer done) = do
-  (entryId, _) <- findEntry pointer
-  time <- resolveTimeDescr done
-  E.update $ \entry -> do
-    E.set entry [ EntryDone =. E.just (E.val time) ]
-    E.where_ (entry E.^. EntryId ==. E.val entryId)
+execCommand = \case
+  -- Add a new entry
+  Add title -> do
+    E.insert_ $ Entry
+      { entryTitle    = title
+      , entrySeen     = Nothing
+      , entryAck      = Nothing
+      , entryDeadline = Nothing
+      , entryDone     = Nothing
+      }
 
--- TODO: can I write 'updateById' or something?
+  -- Set the “seen” field
+  SetSeen pointer seen -> do
+    time <- resolveTimeDescr seen
+    updateEntry pointer $ \entry ->
+      E.set entry [ EntrySeen =. E.just (E.val time) ]
+
+  -- Set the “acknowledged” field
+  SetAck pointer ack -> do
+    time <- resolveTimeDescr ack
+    updateEntry pointer $ \entry ->
+      E.set entry [ EntryAck =. E.just (E.val time) ]
+
+  -- Set the “deadline” field
+  SetDeadline pointer deadline -> do
+    time <- resolveTimeDescr deadline
+    updateEntry pointer $ \entry ->
+      E.set entry [ EntryDeadline =. E.just (E.val time) ]
+
+  -- Set the “done” field
+  SetDone pointer done -> do
+    time <- resolveTimeDescr done
+    updateEntry pointer $ \entry ->
+      E.set entry [ EntryDone =. E.just (E.val time) ]
+
+  where
+    updateEntry pointer upd = do
+      (entryId, _) <- findEntry pointer
+      updateById entryId upd
 
 resolveTimeDescr :: MonadIO m => TimeDescr -> m UTCTime
 resolveTimeDescr Now = liftIO getCurrentTime
+
+----------------------------------------------------------------------------
+-- Utilities
+----------------------------------------------------------------------------
+
+updateById
+  :: (E.PersistEntityBackend val ~ E.SqlBackend,
+      MonadIO m, E.PersistEntity val)
+  => Key val
+  -> (E.SqlExpr (E.Entity val) -> E.SqlQuery a)
+  -> E.SqlWriteT m ()
+updateById entryId upd = E.update $ \entry -> do
+  upd entry
+  E.where_ (entry E.^. E.persistIdField ==. E.val entryId)

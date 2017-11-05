@@ -104,6 +104,7 @@ createEntriesList = do
         , ("Thing"       , gtypeString)
         , ("Seen"        , gtypeString)
         , ("Acknowledged", gtypeString)
+        , ("Deadline"    , gtypeString)
         , ("Done"        , gtypeString)
         ]
 
@@ -152,12 +153,15 @@ setEntries Gui{..} entries = liftIO $ do
     let showTime utcT = do
           localT <- utcToLocalZonedTime utcT
           return (format "{} {}" (dateDashF localT) (hmF localT) :: Text)
-    g_index <- toGValue (Just (show i))
-    g_title <- toGValue (Just entryTitle)
-    g_seen  <- toGValue =<< _Just showTime entrySeen
-    g_ack   <- toGValue =<< _Just showTime entryAck
-    g_done  <- toGValue =<< _Just showTime entryDone
-    #set entriesModel row [0..4] [g_index, g_title, g_seen, g_ack, g_done]
+    values <- sequence
+      [ toGValue (Just (show i))
+      , toGValue (Just entryTitle)
+      , toGValue =<< _Just showTime entrySeen
+      , toGValue =<< _Just showTime entryAck
+      , toGValue =<< _Just showTime entryDeadline
+      , toGValue =<< _Just showTime entryDone
+      ]
+    #set entriesModel row [0..(fromIntegral (length values) - 1)] values
 
 -- | Bind a command execution handler.
 bindCommandHandler

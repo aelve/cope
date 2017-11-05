@@ -52,6 +52,7 @@ main =
   can show an error message if it fails
 * Better parsing (without 'try' everywhere, with labels, etc)
 * Add "Cope.DB" or something that would abstract away getting/setting
+* Make the index column smaller
 
 -}
 
@@ -63,7 +64,6 @@ main =
 * Have something other than “now”
 * Display time diffs instead of dates
 * Save to a real database
-* Display “deadline”
 * Optionally hide entries that were done more than X hours ago (have a
   slider for that)
 * Show errors better instead of having a popup
