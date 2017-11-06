@@ -33,11 +33,11 @@ findEntry p@(Index i) = do
     []  -> fail ("findEntry: no entries for "+||p||+"")
     _   -> fail ("findEntry: several entries for "+||p||+": "+||xs||+"")
 
--- | Get a list of all entries. The entries are sorted from newest to
--- oldest.
-getEntries :: MonadIO m => E.SqlReadT m [Entry]
+-- | Get a list of all entries. The entries are sorted from newest to oldest
+-- and accompanied with their indices (which could be given to 'Index')
+getEntries :: MonadIO m => E.SqlReadT m [(Int, Entry)]
 getEntries =
-  fmap (map E.entityVal) $
+  fmap (indexed . map E.entityVal) $
     E.select $ E.from $ \entry -> do
       E.orderBy [E.desc (entry E.^. EntryId)]
       return entry

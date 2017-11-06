@@ -31,7 +31,11 @@ main =
     gui <- createGui
     let refreshEntries = do
           entries <- sql $ getEntries
-          setEntries gui entries
+          time <- liftIO getCurrentTime
+          -- Show entries that are either not done or were done recently
+          let recent x = diffUTCTime time x <= 3600*24
+              ifShow (_, Entry{..}) = maybe True recent entryDone
+          setEntries gui (filter ifShow entries)
     bindCommandHandler gui $ \cmdString -> do
       case parseCommand cmdString of
         Left err ->
@@ -67,13 +71,12 @@ main =
 * In “done” show how much time was left to the deadline +
   percentage of the distance between “ack” and “deadline”
 * Save to a real database
-* Optionally hide entries that were done more than X hours ago (have a
-  slider for that)
 * Show errors better instead of having a popup
 * Have both TODOs and TOANSWERs or smth
 * Have analytics
 * Allow deleting entries
 * Have trees of entries
 * Allow aborting things
+* Allow showing all entries (or entries in the last month, etc)
 
 -}

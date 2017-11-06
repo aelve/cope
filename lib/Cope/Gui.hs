@@ -147,10 +147,10 @@ runGui Gui{..} = do
 ----------------------------------------------------------------------------
 
 -- | Set the contents of the entries list.
-setEntries :: MonadIO m => Gui -> [Entry] -> m ()
+setEntries :: MonadIO m => Gui -> [(Int, Entry)] -> m ()
 setEntries Gui{..} entries = liftIO $ do
   #clear entriesModel
-  ifor_ entries $ \i Entry{..} -> do
+  for_ entries $ \(i, Entry{..}) -> do
     row <- #append entriesModel
     let showTime utcT = do
           localT <- utcToLocalZonedTime utcT
