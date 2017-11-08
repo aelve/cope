@@ -34,6 +34,7 @@ data TimeDescr
 
 data Command
   = Add Text                            -- ^ Add a new item
+  | Delete EntryPointer                 -- ^ Delete the item
   | SetTitle    EntryPointer Text       -- ^ Set “title”
   | SetWhere    EntryPointer Text       -- ^ Set “where”
   | SetSeen     EntryPointer TimeDescr  -- ^ Set “seen”
@@ -55,6 +56,7 @@ parseCommand = over _Left P.parseErrorPretty
 pCommand :: Parser Command
 pCommand = P.choice $ map P.try
   [ Add <$> (P.string "add " *> P.takeRest)
+  , Delete <$> (mbEntryPointer <* P.string "delete")
   , SetTitle
       <$> (mbEntryPointer <* P.string "title ")
       <*> P.takeRest
@@ -113,6 +115,11 @@ execCommand = \case
       , entryDeadline = Nothing
       , entryDone     = Nothing
       }
+
+  -- Delete an entry
+  Delete pointer -> do
+    (entryId, _) <- findEntry pointer
+    deleteById entryId
 
   -- Set the “title” field
   SetTitle pointer title -> do
@@ -175,4 +182,12 @@ updateById
   -> E.SqlWriteT m ()
 updateById entryId upd = E.update $ \entry -> do
   upd entry
+  E.where_ (entry E.^. E.persistIdField ==. E.val entryId)
+
+deleteById
+  :: (E.PersistEntityBackend val ~ E.SqlBackend,
+      MonadIO m, E.PersistEntity val)
+  => Key val
+  -> E.SqlWriteT m ()
+deleteById entryId = E.delete $ E.from $ \entry ->
   E.where_ (entry E.^. E.persistIdField ==. E.val entryId)

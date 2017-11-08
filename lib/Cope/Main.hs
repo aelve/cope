@@ -76,7 +76,6 @@ main = do
 * Show errors better instead of having a popup
 * Have both TODOs and TOANSWERs or smth
 * Have analytics
-* Allow deleting entries
 * Have trees of entries
 * Allow aborting things
 * Allow showing all entries (or entries in the last month, etc)
