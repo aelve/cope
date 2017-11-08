@@ -57,6 +57,8 @@ main =
 * Better parsing (without 'try' everywhere, with labels, etc)
 * Add "Cope.DB" or something that would abstract away getting/setting
 * Make the index column smaller
+* Allow setting title and “where” in one go
+* Show years in small font
 
 -}
 

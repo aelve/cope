@@ -16,6 +16,7 @@ import qualified Text.Megaparsec.Char as P
 import qualified Text.Megaparsec.Char.Lexer as P
 import qualified Database.Esqueleto as E
 import Database.Esqueleto ((=.), (==.))
+import qualified Data.Text.All as T
 
 import Cope.Types
 import Cope.Query
@@ -26,7 +27,9 @@ import Cope.Query
 ----------------------------------------------------------------------------
 
 data TimeDescr
-  = Now
+  = Now                      -- ^ “Right now”
+  | OnlyTime TimeOfDay       -- ^ Time of day (in the current timezone)
+  | TimeAndDate LocalTime    -- ^ Time and date (in the current timezone)
   deriving (Eq, Show)
 
 data Command
@@ -75,7 +78,21 @@ pCommand = P.choice $ map P.try
     mbEntryPointer = (pEntryPointer <* P.char '.') <|> pure (Index 0)
 
 pTimeDescr :: Parser TimeDescr
-pTimeDescr = Now <$ P.string "now"
+pTimeDescr = P.choice $ map P.try
+  [ Now <$ P.string "now"
+  , OnlyTime <$>
+      (parseTimeM True defaultTimeLocale "%H.%M" . T.toString
+       =<< P.takeRest)
+  , OnlyTime <$>
+      (parseTimeM True defaultTimeLocale "%I.%M%P" . T.toString
+       =<< P.takeRest)
+  , TimeAndDate <$>
+      (parseTimeM True defaultTimeLocale "%F %H.%M" . T.toString
+       =<< P.takeRest)
+  , TimeAndDate <$>
+      (parseTimeM True defaultTimeLocale "%F %I.%M%P" . T.toString
+       =<< P.takeRest)
+  ]
 
 pEntryPointer :: Parser EntryPointer
 pEntryPointer = Index <$> P.decimal
@@ -137,7 +154,14 @@ execCommand = \case
       updateById entryId upd
 
 resolveTimeDescr :: MonadIO m => TimeDescr -> m UTCTime
-resolveTimeDescr Now = liftIO getCurrentTime
+resolveTimeDescr = liftIO . \case
+  Now -> getCurrentTime
+  OnlyTime tod -> do
+    now <- zonedTimeToLocalTime <$> getZonedTime
+    localToUtc $ now {localTimeOfDay = tod}
+  TimeAndDate t -> localToUtc t
+  where
+    localToUtc t = localTimeToUTC <$> getCurrentTimeZone <*> pure t
 
 ----------------------------------------------------------------------------
 -- Utilities
