@@ -21,9 +21,11 @@ import Cope.Command
 
 
 main :: IO ()
-main =
-  runStderrLoggingT $
-  withSqliteConn ":memory:" $ \conn -> do
+main = do
+  dbDir <- getAppUserDataDirectory "aelve/cope"
+  createDirectoryIfMissing True dbDir
+  let dbPath = dbDir </> "data.db"
+  runStderrLoggingT $ withSqliteConn (T.toStrict dbPath) $ \conn -> do
     let sql :: MonadBaseControl IO m => ReaderT SqlBackend m a -> m a
         sql action = runSqlConn action conn
     sql $ runMigration migrateAll
@@ -67,12 +69,10 @@ main =
 
 * Allow pasting screenshots
 * Allow editing data
-* Have something other than “now”
 * Show dates better
 * Show how much time is left to the deadline (as an imprecise diff)
 * In “done” show how much time was left to the deadline +
   percentage of the distance between “ack” and “deadline”
-* Save to a real database
 * Show errors better instead of having a popup
 * Have both TODOs and TOANSWERs or smth
 * Have analytics
