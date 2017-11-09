@@ -61,6 +61,7 @@ main = do
 * Make the index column smaller
 * Allow setting title and “where” in one go
 * Show years in small font
+* Start indexing from 1
 
 -}
 
@@ -79,5 +80,6 @@ main = do
 * Have trees of entries
 * Allow aborting things
 * Allow showing all entries (or entries in the last month, etc)
+* Add a “why afraid to answer” field or smth
 
 -}

@@ -82,22 +82,36 @@ pCommand = P.choice $ map P.try
 pTimeDescr :: Parser TimeDescr
 pTimeDescr = P.choice $ map P.try
   [ Now <$ P.string "now"
-  , OnlyTime <$>
-      (parseTimeM True defaultTimeLocale "%H.%M" . T.toString
-       =<< P.takeRest)
-  , OnlyTime <$>
-      (parseTimeM True defaultTimeLocale "%I.%M%P" . T.toString
-       =<< P.takeRest)
-  , TimeAndDate <$>
-      (parseTimeM True defaultTimeLocale "%F %H.%M" . T.toString
-       =<< P.takeRest)
-  , TimeAndDate <$>
-      (parseTimeM True defaultTimeLocale "%F %I.%M%P" . T.toString
-       =<< P.takeRest)
+  , OnlyTime <$> do
+      s <- T.toString <$> P.takeRest
+      maybe (fail "no time parse") pure $ pTime s
+  , TimeAndDate <$> do
+      s <- T.toString <$> P.takeRest
+      maybe (fail "no time-and-date parse") pure $ pTimeAndDate s
   ]
 
 pEntryPointer :: Parser EntryPointer
 pEntryPointer = Index <$> P.decimal
+
+pTime :: String -> Maybe TimeOfDay
+pTime s = asum
+  [ parseTimeM True defaultTimeLocale "%-H.%-M" s
+  , parseTimeM True defaultTimeLocale "%-H:%-M" s
+  , parseTimeM True defaultTimeLocale "%-H" s
+  , parseTimeM True defaultTimeLocale "%-I.%-M%P" s
+  , parseTimeM True defaultTimeLocale "%-I:%-M%P" s
+  , parseTimeM True defaultTimeLocale "%-I%P" s
+  ]
+
+pTimeAndDate :: String -> Maybe LocalTime
+pTimeAndDate s = asum
+  [ parseTimeM True defaultTimeLocale "%F %-H.%-M" s
+  , parseTimeM True defaultTimeLocale "%F %-H:%-M" s
+  , parseTimeM True defaultTimeLocale "%F %-H" s
+  , parseTimeM True defaultTimeLocale "%F %-I.%-M%P" s
+  , parseTimeM True defaultTimeLocale "%F %-I:%-M%P" s
+  , parseTimeM True defaultTimeLocale "%F %-I%P" s
+  ]
 
 ----------------------------------------------------------------------------
 -- Execution
