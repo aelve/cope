@@ -15,7 +15,7 @@ import Cope.Types
   
 
 data EntryPointer
-  = Index Int   -- ^ Entry with specific index (newest is 0)
+  = Index Int   -- ^ Entry with specific index (newest is 1)
   deriving (Eq, Show)
 
 -- | Find an entry by 'EntryPointer'.
@@ -25,7 +25,7 @@ findEntry p@(Index i) = do
   xs <- fmap (map unwrap) $
     E.select $ E.from $ \entry -> do
       E.orderBy [E.desc (entry E.^. EntryId)]
-      E.offset (fromIntegral i)
+      E.offset (fromIntegral i - 1)
       E.limit 1
       return (entry E.^. EntryId, entry)
   case xs of
@@ -37,7 +37,7 @@ findEntry p@(Index i) = do
 -- and accompanied with their indices (which could be given to 'Index')
 getEntries :: MonadIO m => E.SqlReadT m [(Int, Entry)]
 getEntries =
-  fmap (indexed . map E.entityVal) $
+  fmap (zip [1..] . map E.entityVal) $
     E.select $ E.from $ \entry -> do
       E.orderBy [E.desc (entry E.^. EntryId)]
       return entry

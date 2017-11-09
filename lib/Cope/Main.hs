@@ -61,7 +61,6 @@ main = do
 * Make the index column smaller
 * Allow setting title and “where” in one go
 * Show years in small font
-* Start indexing from 1
 
 -}
 

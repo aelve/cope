@@ -77,7 +77,7 @@ pCommand = P.choice $ map P.try
       <*> pTimeDescr
   ]
   where
-    mbEntryPointer = (pEntryPointer <* P.char '.') <|> pure (Index 0)
+    mbEntryPointer = (pEntryPointer <* P.char '.') <|> pure (Index 1)
 
 pTimeDescr :: Parser TimeDescr
 pTimeDescr = P.choice $ map P.try
