@@ -33,11 +33,8 @@ main = do
     gui <- createGui
     let refreshEntries = do
           entries <- sql $ getEntries
-          time <- liftIO getCurrentTime
-          -- Show entries that are either not done or were done recently
-          let recent x = diffUTCTime time x <= 5*60 -- 5 minutes
-              ifShow (_, Entry{..}) = maybe True recent entryDone
-          setEntries gui (filter ifShow entries)
+          let notDone (_, Entry{..}) = isNothing entryDone
+          setEntries gui (filter notDone entries)
     bindCommandHandler gui $ \cmdString -> do
       case parseCommand cmdString of
         Left err ->
