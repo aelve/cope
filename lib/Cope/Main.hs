@@ -35,7 +35,7 @@ main = do
           entries <- sql $ getEntries
           time <- liftIO getCurrentTime
           -- Show entries that are either not done or were done recently
-          let recent x = diffUTCTime time x <= 3600*4 -- 4 hours
+          let recent x = diffUTCTime time x <= 5*60 -- 5 minutes
               ifShow (_, Entry{..}) = maybe True recent entryDone
           setEntries gui (filter ifShow entries)
     bindCommandHandler gui $ \cmdString -> do
