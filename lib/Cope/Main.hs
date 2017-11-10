@@ -35,7 +35,7 @@ main = do
           entries <- sql $ getEntries
           time <- liftIO getCurrentTime
           -- Show entries that are either not done or were done recently
-          let recent x = diffUTCTime time x <= 3600*24
+          let recent x = diffUTCTime time x <= 3600*4 -- 4 hours
               ifShow (_, Entry{..}) = maybe True recent entryDone
           setEntries gui (filter ifShow entries)
     bindCommandHandler gui $ \cmdString -> do
@@ -61,6 +61,7 @@ main = do
 * Make the index column smaller
 * Allow setting title and “where” in one go
 * Show years in small font
+* Allow adding with Ctrl+Enter
 
 -}
 
@@ -80,5 +81,8 @@ main = do
 * Allow aborting things
 * Allow showing all entries (or entries in the last month, etc)
 * Add a “why afraid to answer” field or smth
+* Use IDs internally, not indices
+* Add a “tag” field
+* Allow searching
 
 -}
